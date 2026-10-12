@@ -60,7 +60,7 @@ clean all
 
 ```text
 ├── .vscode/               # Pre-configured tasks, launch profiles, and recommended extensions
-├── scripts/               # Build and autocompletion helper scripts
+├── bash_scripts/          # Build and autocompletion helper scripts
 ├── src/                   # Place your ROS 2 packages here
 ├── pixi.toml              # Pixi environment & dependencies specification
 ├── pixi.lock              # Reproducible dependency lockfile
