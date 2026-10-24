@@ -11,3 +11,9 @@ if [ -n "$PIXI_PROJECT_ROOT" ] && [ -f "$PIXI_PROJECT_ROOT/bash_scripts/pixi_she
 elif [ -n "$PIXI_PROJECT_ROOT" ] && [ -f "$PIXI_PROJECT_ROOT/install/setup.bash" ]; then
     source "$PIXI_PROJECT_ROOT/install/setup.bash"
 fi
+
+# Use CycloneDDS for robust ROS 2 communication (prevents FastDDS localhost service timeouts)
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+if [ -n "$PIXI_PROJECT_ROOT" ] && [ -f "$PIXI_PROJECT_ROOT/dds_config/cyclonedds.xml" ]; then
+    export CYCLONEDDS_URI="$PIXI_PROJECT_ROOT/dds_config/cyclonedds.xml"
+fi
