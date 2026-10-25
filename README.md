@@ -93,8 +93,10 @@ pixi run ros2 run demo_nodes_py listener
 ## Workspace Structure
 
 ```text
+├── .clangd                # Clangd language server flags and configuration
 ├── .vscode/               # Pre-configured tasks, launch profiles, and recommended extensions
 ├── bash_scripts/          # Build and autocompletion helper scripts
+├── dds_config/            # Workspace CycloneDDS XML configuration
 ├── src/                   # Place your ROS 2 packages here
 ├── pixi.toml              # Pixi environment & dependencies specification
 ├── pixi.lock              # Reproducible dependency lockfile
