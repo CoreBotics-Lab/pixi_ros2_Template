@@ -142,6 +142,44 @@ pixi run ros2 run demo_nodes_py listener
 
 ---
 
+## Switching to ROS 2 Jazzy
+
+If your project requires ROS 2 Jazzy instead of Lyrical, perform the following two quick updates:
+
+### 1. Update `pixi.toml`
+- Change channel URL:
+  ```toml
+  channels = ["https://prefix.dev/robostack-jazzy", "conda-forge"]
+  ```
+- Replace package prefixes from `ros-lyrical-*` to `ros-jazzy-*`:
+  ```toml
+  [dependencies]
+  python = "3.12.*"
+  ros-jazzy-desktop = "*"
+  ros-jazzy-xacro = "*"
+  ros-jazzy-urdf = "*"
+  ros-jazzy-tf-transformations = "*"
+  ros-jazzy-slam-toolbox = "*"
+  ros-jazzy-ros-gz-sim = "*"
+  ros-jazzy-ros-gz-bridge = "*"
+  ros-jazzy-robot-localization = "*"
+  ros-jazzy-joint-state-publisher-gui = "*"
+  ros-jazzy-nav2-lifecycle-manager = "*"
+  ros-jazzy-rmw-cyclonedds-cpp = "*"
+  ```
+
+### 2. Update `.vscode/settings.json` and `pyrefly.toml`
+- In `.vscode/settings.json`, set `"ros.distro": "jazzy"` and change Python paths from `3.14` to `3.12`.
+- In `pyrefly.toml`, set `python-version = "3.12"` and search paths to `python3.12`.
+
+### 3. Reinstall Environment
+```bash
+cd pixi_ros2_lyricalLuthTemplate
+pixi install
+```
+
+---
+
 ## Workspace Structure
 
 ```text
