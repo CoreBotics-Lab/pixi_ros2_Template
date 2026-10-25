@@ -20,7 +20,7 @@ Provides Docker-like workspace isolation with **100% native hardware access** (N
 
 ---
 
-## Quick Start
+## Ubuntu Setup (Native)
 
 ### 1. Prerequisites
 Install [Pixi](https://pixi.sh) on your host machine (if not already installed):
@@ -31,6 +31,7 @@ curl -fsSL https://pixi.sh/install.sh | bash
 ### 2. Setup Workspace
 Clone or download this template, then initialize the environment:
 ```bash
+git clone https://github.com/CoreBotics-Lab/pixi_ros2_lyricalLuthTemplate.git
 cd pixi_ros2_lyricalLuthTemplate
 pixi install
 ```
@@ -53,6 +54,57 @@ debug <package_name>
 # Clean build artifacts
 clean all
 ```
+
+---
+
+## Windows Setup (via WSL2)
+
+Windows users can run this template with full GPU acceleration, GUI display support (WSLg), and native Linux performance using WSL2.
+
+### Step 1: Install WSL2 and Ubuntu
+1. Open **PowerShell** as **Administrator** on Windows 10/11.
+2. Run the following command (Ubuntu 26.04 recommended by default, or 24.04 based on preference):
+   ```powershell
+   wsl --install -d Ubuntu-26.04
+   ```
+   *(Or for Ubuntu 24.04: `wsl --install -d Ubuntu-24.04`)*
+3. Restart your computer if prompted by Windows.
+4. After restarting, Ubuntu will launch in a terminal window. Follow the prompt to create your Linux username and password.
+
+### Step 2: Open Ubuntu Terminal
+For subsequent sessions, open Ubuntu by either:
+- Searching for **Ubuntu** in the Windows Start menu.
+- Opening **Windows Terminal** and selecting the Ubuntu profile.
+
+### Step 3: Install Pixi inside Ubuntu
+Inside the Ubuntu terminal, install Pixi:
+```bash
+curl -fsSL https://pixi.sh/install.sh | bash
+exec bash
+```
+*(Alternatively, close and reopen your Ubuntu terminal to ensure `pixi` is fully loaded into your PATH).*
+
+### Step 4: Clone and Launch the Workspace
+Clone the repository into your Linux home directory (avoid cloning directly onto Windows drive paths like `/mnt/c/` for optimal file I/O performance):
+```bash
+cd ~
+git clone https://github.com/CoreBotics-Lab/pixi_ros2_lyricalLuthTemplate.git
+cd pixi_ros2_lyricalLuthTemplate
+pixi install
+pixi shell
+```
+
+### Step 5: VS Code Integration (Recommended)
+1. Install [VS Code](https://code.visualstudio.com/) on Windows.
+2. Install the **WSL** extension (`ms-vscode-remote.remote-wsl`) from the VS Code Marketplace.
+3. Inside your Ubuntu terminal, navigate to the template directory and launch VS Code:
+   ```bash
+   cd ~/pixi_ros2_lyricalLuthTemplate
+   code .
+   ```
+   > **Tip:** If running `code .` outputs `command not found: code`, open VS Code on Windows, press `Ctrl+Shift+P` (or `F1`), select **WSL: Connect to WSL**, and open the folder `~/pixi_ros2_lyricalLuthTemplate`. This initializes the VS Code WSL server agent and registers the terminal shortcut permanently.
+
+   VS Code will connect directly into your WSL2 Linux workspace with all template settings, Clangd, and Pyrefly tooling pre-configured. Graphical applications (RViz2, Gazebo) launched from the terminal will open seamlessly on your Windows desktop via WSLg.
 
 ---
 
