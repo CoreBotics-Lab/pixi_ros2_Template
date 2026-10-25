@@ -1,4 +1,4 @@
-# Pixi ROS 2 Lyrical Workspace Template 🤖⚡
+# Pixi ROS 2 Lyrical Workspace Template
 
 A reproducible, fully isolated **ROS 2 Lyrical + RoboStack** development template powered by [Pixi](https://pixi.sh).
 
@@ -6,7 +6,7 @@ Provides Docker-like workspace isolation with **100% native hardware access** (N
 
 ---
 
-## ✨ Features
+## Features
 
 - **Isolated & Reproducible**: Powered by RoboStack Lyrical and Pixi. No `sudo apt` or `rosdep` pollution on the host.
 - **Dynamic Fast Builds**: Custom build scripts supporting single packages, wildcards (`build my_pkg*`), and clean builds (`clean all`).
@@ -20,7 +20,7 @@ Provides Docker-like workspace isolation with **100% native hardware access** (N
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Prerequisites
 Install [Pixi](https://pixi.sh) on your host machine (if not already installed):
@@ -56,7 +56,31 @@ clean all
 
 ---
 
-## 📁 Workspace Structure
+## Testing the Setup
+
+To verify that the ROS 2 daemon, middleware, and pub/sub communication are operating correctly, open two terminals and run:
+
+**Terminal 1 (Publisher):**
+```bash
+pixi shell
+ros2 run demo_nodes_py talker
+```
+
+**Terminal 2 (Subscriber):**
+```bash
+pixi shell
+ros2 run demo_nodes_py listener
+```
+
+Alternatively, you can run them directly without entering the shell using `pixi run`:
+```bash
+pixi run ros2 run demo_nodes_py talker
+pixi run ros2 run demo_nodes_py listener
+```
+
+---
+
+## Workspace Structure
 
 ```text
 ├── .vscode/               # Pre-configured tasks, launch profiles, and recommended extensions
