@@ -85,7 +85,7 @@ exec bash
 *(Alternatively, close and reopen your Ubuntu terminal to ensure `pixi` is fully loaded into your PATH).*
 
 ### Step 4: Clone and Launch the Workspace
-Clone the repository into your Linux home directory (avoid cloning directly onto Windows drive paths like `/mnt/c/` for optimal file I/O performance):
+Clone the repository into your Linux home directory (avoid cloning directly onto Windows drive paths like `C:\` or `/mnt/c/` for optimal file I/O performance):
 ```bash
 cd ~
 git clone https://github.com/CoreBotics-Lab/pixi_ros2_lyricalLuthTemplate.git
