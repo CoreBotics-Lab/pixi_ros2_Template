@@ -62,19 +62,29 @@ To verify that the ROS 2 daemon, middleware, and pub/sub communication are opera
 
 **Terminal 1 (Publisher):**
 ```bash
+cd pixi_ros2_lyricalLuthTemplate
 pixi shell
 ros2 run demo_nodes_py talker
 ```
 
 **Terminal 2 (Subscriber):**
 ```bash
+cd pixi_ros2_lyricalLuthTemplate
 pixi shell
 ros2 run demo_nodes_py listener
 ```
 
-Alternatively, you can run them directly without entering the shell using `pixi run`:
+Alternatively, you can execute them directly without entering the shell using `pixi run`:
+
+**Terminal 1 (Publisher):**
 ```bash
+cd pixi_ros2_lyricalLuthTemplate
 pixi run ros2 run demo_nodes_py talker
+```
+
+**Terminal 2 (Subscriber):**
+```bash
+cd pixi_ros2_lyricalLuthTemplate
 pixi run ros2 run demo_nodes_py listener
 ```
 
