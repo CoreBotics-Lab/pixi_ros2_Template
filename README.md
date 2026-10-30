@@ -147,16 +147,16 @@ pixi run ros2 run demo_nodes_py listener
 This template defaults to ROS 2 Lyrical, but switching between distributions (such as transitioning from `lyrical` to `jazzy`) can be performed either automatically via a single command or manually.
 
 ### One-Command Quick Switch
-Run the following single chained command from the workspace root (replace `<old_distro>` and `<new_distro>` accordingly, e.g., `lyrical` and `jazzy`):
+Run the following single chained command from the workspace root (replace `old_distro` and `new_distro` as needed, e.g. `lyrical` to `jazzy`):
 
 ```bash
-sed -i 's/<old_distro>/<new_distro>/g' pixi.toml .vscode/settings.json README.md && rm -f pixi.lock && rm -rf build/ install/ log/ .pixi/ && pixi install && pixi run build
+sed -i 's/<old_distro>/<new_distro>/g' pixi.toml .vscode/settings.json README.md && rm -f pixi.lock && rm -rf build/ install/ log/ .pixi/ && pixi install
 ```
 
-For example, to switch from `lyrical` to `jazzy`:
+For switching specifically from `lyrical` to `jazzy`:
 
 ```bash
-sed -i 's/lyrical/jazzy/g' pixi.toml .vscode/settings.json README.md && rm -f pixi.lock && rm -rf build/ install/ log/ .pixi/ && pixi install && pixi run build
+sed -i 's/lyrical/jazzy/g' pixi.toml .vscode/settings.json README.md && rm -f pixi.lock && rm -rf build/ install/ log/ .pixi/ && pixi install
 ```
 
 > [!IMPORTANT]
