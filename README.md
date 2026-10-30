@@ -142,11 +142,31 @@ pixi run ros2 run demo_nodes_py listener
 
 ---
 
-## Switching to ROS 2 Jazzy
+## Switching Between ROS 2 Distros
 
-If your project requires ROS 2 Jazzy instead of Lyrical, perform the following two quick updates:
+This template defaults to ROS 2 Lyrical, but switching between distributions (such as transitioning from `lyrical` to `jazzy`) can be performed either automatically via a single command or manually.
 
-### 1. Update `pixi.toml`
+### One-Command Quick Switch
+Run the following single chained command from the workspace root (replace `<old_distro>` and `<new_distro>` accordingly, e.g., `lyrical` and `jazzy`):
+
+```bash
+sed -i 's/<old_distro>/<new_distro>/g' pixi.toml .vscode/settings.json README.md && rm -f pixi.lock && rm -rf build/ install/ log/ .pixi/ && pixi install && pixi run build
+```
+
+For example, to switch from `lyrical` to `jazzy`:
+
+```bash
+sed -i 's/lyrical/jazzy/g' pixi.toml .vscode/settings.json README.md && rm -f pixi.lock && rm -rf build/ install/ log/ .pixi/ && pixi install && pixi run build
+```
+
+> [!IMPORTANT]
+> The lockfile (`pixi.lock`) and previous build directories (`build/`, `install/`) must be removed during a distro switch. Removing `pixi.lock` allows Pixi to resolve the target distribution's package dependency graph cleanly without package conflicts.
+
+### Manual Switch Instructions
+
+If you prefer updating configurations manually:
+
+#### 1. Update `pixi.toml`
 - Change channel URL:
   ```toml
   channels = ["https://prefix.dev/robostack-jazzy", "conda-forge"]
@@ -154,7 +174,6 @@ If your project requires ROS 2 Jazzy instead of Lyrical, perform the following t
 - Replace package prefixes from `ros-lyrical-*` to `ros-jazzy-*`:
   ```toml
   [dependencies]
-  python = "3.12.*"
   ros-jazzy-desktop = "*"
   ros-jazzy-xacro = "*"
   ros-jazzy-urdf = "*"
@@ -168,14 +187,15 @@ If your project requires ROS 2 Jazzy instead of Lyrical, perform the following t
   ros-jazzy-rmw-cyclonedds-cpp = "*"
   ```
 
-### 2. Update `.vscode/settings.json` and `pyrefly.toml`
-- In `.vscode/settings.json`, set `"ros.distro": "jazzy"` and change Python paths from `3.14` to `3.12`.
-- In `pyrefly.toml`, set `python-version = "3.12"` and search paths to `python3.12`.
+#### 2. Update Editor Configurations
+- In `.vscode/settings.json`, update `"ros.distro": "jazzy"`.
 
-### 3. Reinstall Environment
+#### 3. Clean and Reinstall Environment
 ```bash
-cd pixi_ros2_lyricalLuthTemplate
+rm -f pixi.lock
+rm -rf build/ install/ log/ .pixi/
 pixi install
+pixi run build
 ```
 
 ---
