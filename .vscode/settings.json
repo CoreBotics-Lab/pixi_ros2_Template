@@ -28,7 +28,7 @@
     ],
 
     // --- ROS 2 Specifics ---
-    "ros.distro": "lyrical",
+    "ros.distro": "jazzy",
     "ros.rosSetupScript": "${workspaceFolder}/.pixi/envs/default/setup.bash",
     "cmake.ignoreCMakeListsMissing": true,
 

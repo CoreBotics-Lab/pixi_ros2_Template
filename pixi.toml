@@ -1,7 +1,7 @@
 [workspace]
 name = "pixi_ros2_Template"
 version = "0.1.0"
-channels = ["https://prefix.dev/robostack-lyrical", "conda-forge"]
+channels = ["https://prefix.dev/robostack-jazzy", "conda-forge"]
 platforms = ["linux-64"]
 
 [activation]
@@ -23,17 +23,17 @@ test = "colcon test"
 kill-gz = "killall -9 gz-sim-main gz-sim-gui-client 2>/dev/null || true"
 
 [dependencies]
-ros-lyrical-desktop = "*"
-ros-lyrical-xacro = "*"
-ros-lyrical-urdf = "*"
-ros-lyrical-tf-transformations = "*"
-ros-lyrical-slam-toolbox = "*"
-ros-lyrical-ros-gz-sim = "*"
-ros-lyrical-ros-gz-bridge = "*"
-ros-lyrical-robot-localization = "*"
-ros-lyrical-joint-state-publisher-gui = "*"
-ros-lyrical-nav2-lifecycle-manager = "*"
-ros-lyrical-rmw-cyclonedds-cpp = "*"
+ros-jazzy-desktop = "*"
+ros-jazzy-xacro = "*"
+ros-jazzy-urdf = "*"
+ros-jazzy-tf-transformations = "*"
+ros-jazzy-slam-toolbox = "*"
+ros-jazzy-ros-gz-sim = "*"
+ros-jazzy-ros-gz-bridge = "*"
+ros-jazzy-robot-localization = "*"
+ros-jazzy-joint-state-publisher-gui = "*"
+ros-jazzy-nav2-lifecycle-manager = "*"
+ros-jazzy-rmw-cyclonedds-cpp = "*"
 qt6-main = "*"
 colcon-common-extensions = "*"
 compilers = "*"

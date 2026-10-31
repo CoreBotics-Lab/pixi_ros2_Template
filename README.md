@@ -144,21 +144,21 @@ pixi run ros2 run demo_nodes_py listener
 
 ## Switching Between ROS 2 Distros
 
-This template defaults to ROS 2 Lyrical, but switching between distributions (such as transitioning from `lyrical` to `jazzy`) can be performed either automatically via a single command or manually.
+This template defaults to **ROS 2 Jazzy** (the latest LTS), but switching between distributions (such as transitioning from `jazzy` to `lyrical`) can be performed either automatically via a single command or manually.
 
 ### One-Command Quick Switch
-Make sure you are in the workspace root directory, then run the following command (replace `old_distro` and `new_distro` as needed, e.g. `lyrical` to `jazzy`):
+Make sure you are in the workspace root directory, then run the following command (replace `old_distro` and `new_distro` as needed, e.g. `jazzy` to `lyrical`):
 
 ```bash
 cd pixi_ros2_Template  # Ensure you are inside the workspace folder
 sed -i 's/<old_distro>/<new_distro>/g' pixi.toml .vscode/settings.json README.md && rm -f pixi.lock && rm -rf build/ install/ log/ .pixi/ && pixi install
 ```
 
-For switching specifically from `lyrical` to `jazzy`:
+For switching specifically from `jazzy` to `lyrical`:
 
 ```bash
 cd pixi_ros2_Template  # Ensure you are inside the workspace folder
-sed -i 's/lyrical/jazzy/g' pixi.toml .vscode/settings.json README.md && rm -f pixi.lock && rm -rf build/ install/ log/ .pixi/ && pixi install
+sed -i 's/jazzy/lyrical/g' pixi.toml .vscode/settings.json README.md && rm -f pixi.lock && rm -rf build/ install/ log/ .pixi/ && pixi install
 ```
 
 > [!WARNING]
@@ -174,26 +174,26 @@ If you prefer updating configurations manually:
 #### 1. Update `pixi.toml`
 - Change channel URL:
   ```toml
-  channels = ["https://prefix.dev/robostack-jazzy", "conda-forge"]
+  channels = ["https://prefix.dev/robostack-lyrical", "conda-forge"]
   ```
-- Replace package prefixes from `ros-lyrical-*` to `ros-jazzy-*`:
+- Replace package prefixes from `ros-jazzy-*` to `ros-lyrical-*`:
   ```toml
   [dependencies]
-  ros-jazzy-desktop = "*"
-  ros-jazzy-xacro = "*"
-  ros-jazzy-urdf = "*"
-  ros-jazzy-tf-transformations = "*"
-  ros-jazzy-slam-toolbox = "*"
-  ros-jazzy-ros-gz-sim = "*"
-  ros-jazzy-ros-gz-bridge = "*"
-  ros-jazzy-robot-localization = "*"
-  ros-jazzy-joint-state-publisher-gui = "*"
-  ros-jazzy-nav2-lifecycle-manager = "*"
-  ros-jazzy-rmw-cyclonedds-cpp = "*"
+  ros-lyrical-desktop = "*"
+  ros-lyrical-xacro = "*"
+  ros-lyrical-urdf = "*"
+  ros-lyrical-tf-transformations = "*"
+  ros-lyrical-slam-toolbox = "*"
+  ros-lyrical-ros-gz-sim = "*"
+  ros-lyrical-ros-gz-bridge = "*"
+  ros-lyrical-robot-localization = "*"
+  ros-lyrical-joint-state-publisher-gui = "*"
+  ros-lyrical-nav2-lifecycle-manager = "*"
+  ros-lyrical-rmw-cyclonedds-cpp = "*"
   ```
 
 #### 2. Update Editor Configurations
-- In `.vscode/settings.json`, update `"ros.distro": "jazzy"`.
+- In `.vscode/settings.json`, update `"ros.distro": "lyrical"`.
 
 #### 3. Clean and Reinstall Environment
 ```bash
