@@ -161,6 +161,9 @@ cd pixi_ros2_Template  # Ensure you are inside the workspace folder
 sed -i 's/lyrical/jazzy/g' pixi.toml .vscode/settings.json README.md && rm -f pixi.lock && rm -rf build/ install/ log/ .pixi/ && pixi install
 ```
 
+> [!WARNING]
+> You must run this command from the root directory of the workspace (`pixi_ros2_Template`). If executed from any other folder, `sed` will not find `pixi.toml` and will fail with a `No such file or directory` error.
+
 > [!IMPORTANT]
 > The lockfile (`pixi.lock`) and previous build directories (`build/`, `install/`) must be removed during a distro switch. Removing `pixi.lock` allows Pixi to resolve the target distribution's package dependency graph cleanly without package conflicts.
 
