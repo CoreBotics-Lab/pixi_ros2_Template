@@ -1,5 +1,5 @@
 [workspace]
-name = "pixi_ros2_lyricalLuthTemplate"
+name = "pixi_ros2_Template"
 version = "0.1.0"
 channels = ["https://prefix.dev/robostack-lyrical", "conda-forge"]
 platforms = ["linux-64"]

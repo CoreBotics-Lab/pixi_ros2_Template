@@ -31,8 +31,8 @@ curl -fsSL https://pixi.sh/install.sh | bash
 ### 2. Setup Workspace
 Clone or download this template, then initialize the environment:
 ```bash
-git clone https://github.com/CoreBotics-Lab/pixi_ros2_lyricalLuthTemplate.git
-cd pixi_ros2_lyricalLuthTemplate
+git clone https://github.com/CoreBotics-Lab/pixi_ros2_Template.git
+cd pixi_ros2_Template
 pixi install
 ```
 
@@ -88,8 +88,8 @@ exec bash
 Clone the repository into your Linux home directory (avoid cloning directly onto Windows drive paths like `C:\` or `/mnt/c/` for optimal file I/O performance):
 ```bash
 cd ~
-git clone https://github.com/CoreBotics-Lab/pixi_ros2_lyricalLuthTemplate.git
-cd pixi_ros2_lyricalLuthTemplate
+git clone https://github.com/CoreBotics-Lab/pixi_ros2_Template.git
+cd pixi_ros2_Template
 pixi install
 pixi shell
 ```
@@ -99,10 +99,10 @@ pixi shell
 2. Install the **WSL** extension (`ms-vscode-remote.remote-wsl`) from the VS Code Marketplace.
 3. Inside your Ubuntu terminal, navigate to the template directory and launch VS Code:
    ```bash
-   cd ~/pixi_ros2_lyricalLuthTemplate
+   cd ~/pixi_ros2_Template
    code .
    ```
-   > **Tip:** If running `code .` outputs `command not found: code`, open VS Code on Windows, press `Ctrl+Shift+P` (or `F1`), select **WSL: Connect to WSL**, and open the folder `~/pixi_ros2_lyricalLuthTemplate`. This initializes the VS Code WSL server agent and registers the terminal shortcut permanently.
+   > **Tip:** If running `code .` outputs `command not found: code`, open VS Code on Windows, press `Ctrl+Shift+P` (or `F1`), select **WSL: Connect to WSL**, and open the folder `~/pixi_ros2_Template`. This initializes the VS Code WSL server agent and registers the terminal shortcut permanently.
 
    VS Code will connect directly into your WSL2 Linux workspace with all template settings, Clangd, and Pyrefly tooling pre-configured. Graphical applications (RViz2, Gazebo) launched from the terminal will open seamlessly on your Windows desktop via WSLg.
 
@@ -114,14 +114,14 @@ To verify that the ROS 2 daemon, middleware, and pub/sub communication are opera
 
 **Terminal 1 (Publisher):**
 ```bash
-cd pixi_ros2_lyricalLuthTemplate
+cd pixi_ros2_Template
 pixi shell
 ros2 run demo_nodes_py talker
 ```
 
 **Terminal 2 (Subscriber):**
 ```bash
-cd pixi_ros2_lyricalLuthTemplate
+cd pixi_ros2_Template
 pixi shell
 ros2 run demo_nodes_py listener
 ```
@@ -130,13 +130,13 @@ Alternatively, you can execute them directly without entering the shell using `p
 
 **Terminal 1 (Publisher):**
 ```bash
-cd pixi_ros2_lyricalLuthTemplate
+cd pixi_ros2_Template
 pixi run ros2 run demo_nodes_py talker
 ```
 
 **Terminal 2 (Subscriber):**
 ```bash
-cd pixi_ros2_lyricalLuthTemplate
+cd pixi_ros2_Template
 pixi run ros2 run demo_nodes_py listener
 ```
 
