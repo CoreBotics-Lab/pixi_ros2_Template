@@ -1,6 +1,6 @@
-# Pixi ROS 2 Lyrical Workspace Template
+# Pixi ROS 2 Workspace Template
 
-A reproducible, fully isolated **ROS 2 Lyrical + RoboStack** development template powered by [Pixi](https://pixi.sh).
+A reproducible, fully isolated **ROS 2 + RoboStack** development template powered by [Pixi](https://pixi.sh).
 
 Provides Docker-like workspace isolation with **100% native hardware access** (NVIDIA/AMD GPUs, displays, USB sensors, serial devices) and zero host system pollution.
 
@@ -8,7 +8,7 @@ Provides Docker-like workspace isolation with **100% native hardware access** (N
 
 ## Features
 
-- **Isolated & Reproducible**: Powered by RoboStack Lyrical and Pixi. No `sudo apt` or `rosdep` pollution on the host.
+- **Isolated & Reproducible**: Powered by RoboStack and Pixi. No `sudo apt` or `rosdep` pollution on the host.
 - **Dynamic Fast Builds**: Custom build scripts supporting single packages, wildcards (`build my_pkg*`), and clean builds (`clean all`).
 - **Tab Autocompletion**: Package name completion works automatically inside `pixi shell` (`build <TAB>`).
 - **VS Code Pre-configured**:
