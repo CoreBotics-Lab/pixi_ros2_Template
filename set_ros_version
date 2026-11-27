@@ -4,15 +4,47 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
+get_recommended_distro() {
+    local now_year now_month now_months min_months=18
+    now_year=$((10#$(date +%Y)))
+    now_month=$((10#$(date +%m)))
+    now_months=$((now_year * 12 + now_month))
+
+    # LTS distributions in chronological order: name:eol_year:eol_month
+    local entry name eol_y eol_m eol_months
+    for entry in "humble:2027:5" "jazzy:2029:5" "lyrical:2031:5"; do
+        IFS=':' read -r name eol_y eol_m <<< "$entry"
+        eol_months=$((eol_y * 12 + eol_m))
+        if (( eol_months - now_months >= min_months )); then
+            echo "$name"
+            return 0
+        fi
+    done
+    echo "lyrical"
+}
+
 usage() {
+    local rec
+    rec="$(get_recommended_distro)"
+
+    local l_tag="" k_tag="" j_tag="" h_tag=""
+    case "$rec" in
+        lyrical) l_tag=" [Recommended]" ;;
+        kilted)  k_tag=" [Recommended]" ;;
+        jazzy)   j_tag=" [Recommended]" ;;
+        humble)  h_tag=" [Recommended]" ;;
+    esac
+
     cat <<EOF
 Usage: $(basename "$0") <ros_distro>
 
 Available ROS 2 distributions (RoboStack):
-  lyrical   Lyrical Luth      (LTS, supported until May 2031)
-  kilted    Kilted Kaiju      (Standard, supported until Dec 2026)
-  jazzy     Jazzy Jalisco     (LTS, supported until May 2029)
-  humble    Humble Hawksbill  (LTS, supported until May 2027)
+  Distro    Release           Support / EOL
+  ------    -------           -------------
+  lyrical   Lyrical Luth      LTS, supported until May 2031${l_tag}
+  kilted    Kilted Kaiju      Standard, supported until Dec 2026${k_tag}
+  jazzy     Jazzy Jalisco     LTS, supported until May 2029${j_tag}
+  humble    Humble Hawksbill  LTS, supported until May 2027${h_tag}
 EOF
 }
 
