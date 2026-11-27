@@ -16,8 +16,9 @@ load_distros() {
     local fetched=""
     if command -v curl >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
         fetched="$(curl -fsSL --max-time 4 https://docs.ros.org/en/rolling/Releases.html 2>/dev/null | python3 -c '
-import sys, re, html
+import sys, re, html, urllib.request
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor
 
 def parse_date(s):
     for fmt in ("%B %d, %Y", "%B %Y"):
@@ -27,12 +28,22 @@ def parse_date(s):
             pass
     return None
 
+def has_robostack(distro):
+    url = f"https://prefix.dev/robostack-{distro}/linux-64/repodata.json"
+    req = urllib.request.Request(url, method="HEAD")
+    try:
+        with urllib.request.urlopen(req, timeout=3) as resp:
+            return resp.status < 400
+    except urllib.error.HTTPError as e:
+        return e.code != 404
+    except Exception:
+        return True
+
 data = sys.stdin.read()
 rows = re.findall(r"<tr class=\"row-(?:even|odd)\"[^>]*>(.*?)</tr>", data, re.S)
 now = datetime.now()
 now_m = now.year * 12 + now.month
-active = []
-eol = []
+candidates = []
 for r in rows:
     cols = [html.unescape(re.sub(r"<[^>]+>", "", c)).strip() for c in re.findall(r"<td[^>]*>(.*?)</td>", r, re.S)]
     if len(cols) >= 4 and cols[0] and cols[3]:
@@ -40,17 +51,26 @@ for r in rows:
         distro = release.split()[0].lower()
         rel_dt = parse_date(cols[1])
         eol_dt = parse_date(cols[3])
-        # Only include released distros from Foxy (2020) onward
         if not rel_dt or not eol_dt or rel_dt > now or rel_dt.year < 2020:
             continue
-        is_lts = (eol_dt.year - rel_dt.year) >= 4
-        eol_m = eol_dt.year * 12 + eol_dt.month
-        kind = "LTS" if is_lts else "Standard"
-        eol_fmt = eol_dt.strftime("%b %Y")
-        if eol_m >= now_m:
-            active.append((distro, release, kind, eol_fmt, eol_m, is_lts))
-        else:
-            eol.append((distro, release, kind, eol_fmt))
+        candidates.append((distro, release, rel_dt, eol_dt))
+
+with ThreadPoolExecutor(max_workers=6) as ex:
+    available = list(ex.map(lambda c: has_robostack(c[0]), candidates))
+
+active = []
+eol = []
+for (distro, release, rel_dt, eol_dt), ok in zip(candidates, available):
+    if not ok:
+        continue
+    is_lts = (eol_dt.year - rel_dt.year) >= 4
+    eol_m = eol_dt.year * 12 + eol_dt.month
+    kind = "LTS" if is_lts else "Standard"
+    eol_fmt = eol_dt.strftime("%b %Y")
+    if eol_m >= now_m:
+        active.append((distro, release, kind, eol_fmt, eol_m, is_lts))
+    else:
+        eol.append((distro, release, kind, eol_fmt))
 
 if not active and not eol:
     sys.exit(1)
@@ -79,7 +99,7 @@ for distro, release, kind, eol_fmt in eol:
         return 0
     fi
 
-    # Offline fallback if docs.ros.org is unreachable
+    # Offline fallback if docs.ros.org is unreachable (RoboStack-hosted distros)
     local now_year now_month now_months min_months=18
     now_year=$((10#$(date +%Y)))
     now_month=$((10#$(date +%m)))
@@ -91,9 +111,6 @@ for distro, release, kind, eol_fmt in eol:
         "kilted|Kilted Kaiju|Standard|Dec 2026|2026|12|0"
         "jazzy|Jazzy Jalisco|LTS|May 2029|2029|5|1"
         "humble|Humble Hawksbill|LTS|May 2027|2027|5|1"
-        "iron|Iron Irwini|Standard|Dec 2024|2024|12|0"
-        "galactic|Galactic Geochelone|Standard|Dec 2022|2022|12|0"
-        "foxy|Foxy Fitzroy|LTS|Jun 2023|2023|6|1"
     )
 
     local entry name rel kind eol_label eol_y eol_m is_lts eol_months
@@ -303,7 +320,23 @@ if [[ "$CURRENT_DISTRO" == "$TARGET_DISTRO" ]]; then
     fi
 fi
 
+check_robostack_channel() {
+    local distro="$1"
+    if command -v curl >/dev/null 2>&1; then
+        local url="https://prefix.dev/robostack-${distro}/linux-64/repodata.json"
+        local code
+        code="$(curl -s -o /dev/null -w "%{http_code}" --max-time 6 "$url" || true)"
+        if [[ "$code" == "404" ]]; then
+            echo "Error: RoboStack channel 'https://prefix.dev/robostack-${distro}' does not exist (HTTP 404)." >&2
+            echo "Your workspace files and current environment were not modified." >&2
+            exit 1
+        fi
+    fi
+}
+
 ensure_pixi
+
+check_robostack_channel "$TARGET_DISTRO"
 
 echo "Switching ROS 2 distro from '$CURRENT_DISTRO' to '$TARGET_DISTRO'..."
 
