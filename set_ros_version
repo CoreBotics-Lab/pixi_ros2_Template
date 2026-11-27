@@ -8,13 +8,11 @@ usage() {
     cat <<EOF
 Usage: $(basename "$0") <ros_distro>
 
-Switch the workspace ROS 2 distribution (e.g., jazzy, lyrical, kilted).
-Checks the currently configured distro in pixi.toml:
-  - If it already matches <ros_distro> and .pixi/ exists, skips installation.
-  - Otherwise, ensures Pixi is installed, updates pixi.toml, removes
-    pixi.lock and build/install/log/.pixi directories, runs 'pixi install',
-    and configures the resolved Python version in pixi.toml,
-    .vscode/settings.json, and pyrefly.toml.
+Available ROS 2 distributions (RoboStack):
+  lyrical   Lyrical Luth      (LTS, supported until May 2031)
+  kilted    Kilted Kaiju      (Standard, supported until Dec 2026)
+  jazzy     Jazzy Jalisco     (LTS, supported until May 2029)
+  humble    Humble Hawksbill  (LTS, supported until May 2027)
 EOF
 }
 
@@ -24,7 +22,9 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
 fi
 
 if [[ $# -ne 1 || -z "${1:-}" ]]; then
-    usage
+    echo "Warning: No ROS 2 distribution specified." >&2
+    echo "" >&2
+    usage >&2
     exit 1
 fi
 
@@ -87,23 +87,41 @@ sync_python_version() {
         return 0
     fi
 
-    echo "Detected Python $python_ver. Updating configuration files..."
+    local pixi_changed=0
+    local config_changed=0
 
-    sed -i -E "s/^python = \"[^\"]+\"/python = \"${python_ver}.*\"/" pixi.toml
+    if ! grep -qE "^python = \"${python_ver}\.\*\"" pixi.toml; then
+        sed -i -E "s/^python = \"[^\"]+\"/python = \"${python_ver}.*\"/" pixi.toml
+        pixi_changed=1
+        config_changed=1
+    fi
 
-    if [[ -f ".vscode/settings.json" ]]; then
-        sed -i -E "s|lib/python[0-9]+\.[^/]+/site-packages|lib/python${python_ver}/site-packages|g" .vscode/settings.json
+    if [[ -f ".vscode/settings.json" ]] && grep -qE "lib/python[0-9]+\.[^/]+/site-packages" .vscode/settings.json; then
+        if grep -oE "lib/python[0-9]+\.[^/]+/site-packages" .vscode/settings.json | grep -qv "lib/python${python_ver}/site-packages"; then
+            sed -i -E "s|lib/python[0-9]+\.[^/]+/site-packages|lib/python${python_ver}/site-packages|g" .vscode/settings.json
+            config_changed=1
+        fi
     fi
 
     if [[ -f "pyrefly.toml" ]]; then
-        sed -i -E \
-            -e "s/^python-version = \"[^\"]+\"/python-version = \"${python_ver}\"/" \
-            -e "s|lib/python[0-9]+\.[^/]+/site-packages|lib/python${python_ver}/site-packages|g" \
-            pyrefly.toml
+        if ! grep -qE "^python-version = \"${python_ver}\"$" pyrefly.toml || (grep -qE "lib/python[0-9]+\.[^/]+/site-packages" pyrefly.toml && grep -oE "lib/python[0-9]+\.[^/]+/site-packages" pyrefly.toml | grep -qv "lib/python${python_ver}/site-packages"); then
+            sed -i -E \
+                -e "s/^python-version = \"[^\"]+\"/python-version = \"${python_ver}\"/" \
+                -e "s|lib/python[0-9]+\.[^/]+/site-packages|lib/python${python_ver}/site-packages|g" \
+                pyrefly.toml
+            config_changed=1
+        fi
     fi
 
-    # Refresh lockfile after pinning the resolved Python version
-    pixi install
+    if [[ "$config_changed" -eq 1 ]]; then
+        echo "Synced Python $python_ver across configuration files."
+    fi
+
+    # Refresh lockfile only if pixi.toml python pin changed
+    if [[ "$pixi_changed" -eq 1 ]]; then
+        ensure_pixi
+        pixi install
+    fi
 }
 
 sync_workspace_name() {
@@ -122,6 +140,7 @@ sync_workspace_name
 
 if [[ "$CURRENT_DISTRO" == "$TARGET_DISTRO" ]]; then
     if [[ -d ".pixi" ]]; then
+        sync_python_version
         echo "ROS 2 distro is already '$TARGET_DISTRO' and installed. Skipping."
         exit 0
     else

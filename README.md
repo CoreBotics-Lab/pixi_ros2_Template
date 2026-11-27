@@ -22,21 +22,19 @@ Provides Docker-like workspace isolation with **100% native hardware access** (N
 
 ## Ubuntu Setup (Native)
 
-### 1. Prerequisites
-Install [Pixi](https://pixi.sh) on your host machine (if not already installed):
-```bash
-curl -fsSL https://pixi.sh/install.sh | bash
-```
-
-### 2. Setup Workspace
-Clone or download this template, then initialize the environment:
+### 1. Clone & Setup Workspace
+Clone or download this template, then run `set_ros_version` with your target ROS 2 distribution (defaults to `jazzy`, or pass another distro such as `lyrical`):
 ```bash
 git clone https://github.com/CoreBotics-Lab/pixi_ros2_Template.git
 cd pixi_ros2_Template
-pixi install
+./set_ros_version jazzy
 ```
+This script automatically installs [Pixi](https://pixi.sh) if it is not already on your system, syncs the workspace name in `pixi.toml`, installs the ROS 2 environment, and configures the matching Python version across `pixi.toml`, `.vscode/settings.json`, and `pyrefly.toml`.
 
-### 3. Enter Environment & Build
+> [!NOTE]
+> If `set_ros_version` installed Pixi for the first time and `pixi` is not found in your current terminal afterwards, close and reopen your terminal or run `exec bash` to reload your `PATH`.
+
+### 2. Enter Environment & Build
 ```bash
 pixi shell
 ```
@@ -63,11 +61,10 @@ Windows users can run this template with full GPU acceleration, GUI display supp
 
 ### Step 1: Install WSL2 and Ubuntu
 1. Open **PowerShell** as **Administrator** on Windows 10/11.
-2. Run the following command (Ubuntu 26.04 recommended by default, or 24.04 based on preference):
+2. Run the following command (Ubuntu 24.04 is recommended by default):
    ```powershell
-   wsl --install -d Ubuntu-26.04
+   wsl --install -d Ubuntu-24.04
    ```
-   *(Or for Ubuntu 24.04: `wsl --install -d Ubuntu-24.04`)*
 3. Restart your computer if prompted by Windows.
 4. After restarting, Ubuntu will launch in a terminal window. Follow the prompt to create your Linux username and password.
 
@@ -76,25 +73,19 @@ For subsequent sessions, open Ubuntu by either:
 - Searching for **Ubuntu** in the Windows Start menu.
 - Opening **Windows Terminal** and selecting the Ubuntu profile.
 
-### Step 3: Install Pixi inside Ubuntu
-Inside the Ubuntu terminal, install Pixi:
-```bash
-curl -fsSL https://pixi.sh/install.sh | bash
-exec bash
-```
-*(Alternatively, close and reopen your Ubuntu terminal to ensure `pixi` is fully loaded into your PATH).*
-
-### Step 4: Clone and Launch the Workspace
-Clone the repository into your Linux home directory (avoid cloning directly onto Windows drive paths like `C:\` or `/mnt/c/` for optimal file I/O performance):
+### Step 3: Clone and Launch the Workspace
+Clone the repository into your Linux home directory (avoid cloning directly onto Windows drive paths like `C:\` or `/mnt/c/` for optimal file I/O performance), then run `set_ros_version`:
 ```bash
 cd ~
 git clone https://github.com/CoreBotics-Lab/pixi_ros2_Template.git
 cd pixi_ros2_Template
-pixi install
+./set_ros_version jazzy
+exec bash   # Reload PATH if Pixi was installed for the first time
 pixi shell
 ```
+*(Replace `jazzy` with your desired ROS 2 distribution, such as `lyrical`, if needed.)*
 
-### Step 5: VS Code Integration (Recommended)
+### Step 4: VS Code Integration (Recommended)
 1. Install [VS Code](https://code.visualstudio.com/) on Windows.
 2. Install the **WSL** extension (`ms-vscode-remote.remote-wsl`) from the VS Code Marketplace.
 3. Inside your Ubuntu terminal, navigate to the template directory and launch VS Code:
@@ -160,9 +151,6 @@ The script checks the currently configured distro in `pixi.toml`:
 
 > [!WARNING]
 > Run `./set_ros_version <distro>` from the workspace root (`pixi_ros2_Template`), or invoke it by path from any directory (`<path-to-workspace>/set_ros_version <distro>`).
-
-> [!IMPORTANT]
-> The lockfile (`pixi.lock`) and previous build directories (`build/`, `install/`) must be removed during a distro switch. Removing `pixi.lock` allows Pixi to resolve the target distribution's package dependency graph cleanly without package conflicts.
 
 > [!NOTE]
 > If `set_ros_version` installed Pixi for the first time and `pixi` is not found in your current terminal afterwards, close and reopen your terminal or run `exec bash` to reload your `PATH`.
