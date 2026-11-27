@@ -345,7 +345,7 @@ sed -i \
     -e "s/ros-${CURRENT_DISTRO}-/ros-${TARGET_DISTRO}-/g" \
     pixi.toml
 
-# Unpin Python so Pixi resolves the version required by the target ROS 2 distro
+# Unpin Python so Pixi dynamically resolves the version from RoboStack
 sed -i -E "s/^python = \"[^\"]+\"/python = \"*\"/" pixi.toml
 
 if [[ -f ".vscode/settings.json" ]]; then
