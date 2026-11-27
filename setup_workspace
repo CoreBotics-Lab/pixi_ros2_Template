@@ -306,15 +306,122 @@ sync_workspace_name() {
 
 sync_workspace_name
 
+get_recommended_python() {
+    local distro="$1"
+    if command -v curl >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
+        local url ubuntu_codename=""
+        for url in \
+            "https://docs.ros.org/en/${distro}/Get-Started/Installation/Ubuntu-Install-Debs.html" \
+            "https://docs.ros.org/en/${distro}/Installation/Ubuntu-Install-Debs.html"; do
+            ubuntu_codename="$(curl -fsSL --max-time 10 "$url" 2>/dev/null \
+                | grep -oE 'Ubuntu [A-Za-z ]+ \([0-9]+\.[0-9]+\)' | head -n 1 \
+                | awk '{print tolower($2)}' || true)"
+            if [[ -n "$ubuntu_codename" ]]; then
+                break
+            fi
+        done
+
+        if [[ -n "$ubuntu_codename" ]]; then
+            local py_ver=""
+            py_ver="$(curl -fsSL --max-time 6 \
+                "https://api.launchpad.net/1.0/ubuntu/+archive/primary?ws.op=getPublishedSources&distro_series=https://api.launchpad.net/1.0/ubuntu/${ubuntu_codename}&source_name=python3-defaults&exact_match=true&status=Published" 2>/dev/null \
+                | python3 -c 'import sys, json, re; d=json.load(sys.stdin); v=d["entries"][0]["source_package_version"]; m=re.match(r"3\.[0-9]+", v); print(m.group(0) if m else "")' 2>/dev/null || true)"
+            if [[ -n "$py_ver" ]]; then
+                echo "${py_ver}.*"
+                return 0
+            fi
+        fi
+    fi
+    echo "*"
+}
+
+install_with_recommended_python() {
+    local distro="$1"
+    local target_py
+    target_py="$(get_recommended_python "$distro")"
+    echo "Target Python constraint for '$distro': $target_py"
+    sed -i -E "s/^python = \"[^\"]+\"/python = \"${target_py}\"/" pixi.toml
+
+    if ! pixi install; then
+        if [[ "$target_py" != "*" ]]; then
+            echo "Warning: RoboStack '$distro' has no build for Python '${target_py}'. Falling back to '*'..." >&2
+            sed -i -E "s/^python = \"[^\"]+\"/python = \"*\"/" pixi.toml
+            rm -f pixi.lock
+            pixi install
+        else
+            exit 1
+        fi
+    fi
+}
+
+get_recommended_python() {
+    local distro="$1"
+    if command -v curl >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
+        local url ubuntu_codename=""
+        for url in \
+            "https://docs.ros.org/en/${distro}/Get-Started/Installation/Ubuntu-Install-Debs.html" \
+            "https://docs.ros.org/en/${distro}/Installation/Ubuntu-Install-Debs.html"; do
+            ubuntu_codename="$(curl -fsSL --max-time 10 "$url" 2>/dev/null \
+                | grep -oE 'Ubuntu [A-Za-z ]+ \([0-9]+\.[0-9]+\)' | head -n 1 \
+                | awk '{print tolower($2)}' || true)"
+            if [[ -n "$ubuntu_codename" ]]; then
+                break
+            fi
+        done
+
+        if [[ -n "$ubuntu_codename" ]]; then
+            local py_ver=""
+            py_ver="$(curl -fsSL --max-time 6 \
+                "https://api.launchpad.net/1.0/ubuntu/+archive/primary?ws.op=getPublishedSources&distro_series=https://api.launchpad.net/1.0/ubuntu/${ubuntu_codename}&source_name=python3-defaults&exact_match=true&status=Published" 2>/dev/null \
+                | python3 -c 'import sys, json, re; d=json.load(sys.stdin); v=d["entries"][0]["source_package_version"]; m=re.match(r"3\.[0-9]+", v); print(m.group(0) if m else "")' 2>/dev/null || true)"
+            if [[ -n "$py_ver" ]]; then
+                echo "${py_ver}.*"
+                return 0
+            fi
+        fi
+    fi
+    echo "*"
+}
+
+install_with_recommended_python() {
+    local distro="$1"
+    local target_py
+    target_py="$(get_recommended_python "$distro")"
+    echo "Target Python constraint for '$distro': $target_py"
+    sed -i -E "s/^python = \"[^\"]+\"/python = \"${target_py}\"/" pixi.toml
+
+    if ! pixi install; then
+        if [[ "$target_py" != "*" ]]; then
+            echo "Warning: RoboStack '$distro' has no build for Python '${target_py}'. Falling back to '*'..." >&2
+            sed -i -E "s/^python = \"[^\"]+\"/python = \"*\"/" pixi.toml
+            rm -f pixi.lock
+            pixi install
+        else
+            exit 1
+        fi
+    fi
+}
+
 if [[ "$CURRENT_DISTRO" == "$TARGET_DISTRO" ]]; then
     if [[ -d ".pixi" ]]; then
+        target_py="$(get_recommended_python "$TARGET_DISTRO")"
+        installed_py=""
+        if [[ -x ".pixi/envs/default/bin/python" ]]; then
+            installed_py="$(".pixi/envs/default/bin/python" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
+        fi
+        if [[ "$target_py" != "*" && -n "$installed_py" && "${installed_py}.*" != "$target_py" ]]; then
+            ensure_pixi
+            echo "Updating '$TARGET_DISTRO' Python from $installed_py to $target_py (recommended by docs.ros.org)..."
+            rm -f pixi.lock
+            install_with_recommended_python "$TARGET_DISTRO"
+        fi
         sync_python_version
         echo "ROS 2 distro is already '$TARGET_DISTRO' and installed. Skipping."
         exit 0
     else
         ensure_pixi
         echo "ROS 2 distro is already '$TARGET_DISTRO', but '.pixi/' is missing. Running 'pixi install'..."
-        pixi install
+        install_with_recommended_python "$TARGET_DISTRO"
         sync_python_version
         exit 0
     fi
@@ -345,9 +452,6 @@ sed -i \
     -e "s/ros-${CURRENT_DISTRO}-/ros-${TARGET_DISTRO}-/g" \
     pixi.toml
 
-# Unpin Python so Pixi dynamically resolves the version from RoboStack
-sed -i -E "s/^python = \"[^\"]+\"/python = \"*\"/" pixi.toml
-
 if [[ -f ".vscode/settings.json" ]]; then
     sed -i \
         "s/\"ros\.distro\": \"${CURRENT_DISTRO}\"/\"ros.distro\": \"${TARGET_DISTRO}\"/g" \
@@ -357,7 +461,7 @@ fi
 rm -f pixi.lock
 rm -rf build/ install/ log/ .pixi/
 
-pixi install
+install_with_recommended_python "$TARGET_DISTRO"
 sync_python_version
 
 echo "Successfully switched ROS 2 distro to '$TARGET_DISTRO'."
