@@ -23,13 +23,19 @@ Provides Docker-like workspace isolation with **100% native hardware access** (N
 ## Ubuntu Setup (Native)
 
 ### 1. Clone & Setup Workspace
-Clone or download this template, then run `setup_workspace` with your target ROS 2 distribution (defaults to `jazzy`, or pass another distro such as `lyrical`):
+Clone this template without its `.git` history and run `setup_workspace`:
 ```bash
-git clone https://github.com/CoreBotics-Lab/pixi_ros2_Template.git
-cd pixi_ros2_Template
-./setup_workspace jazzy
+git clone --depth 1 https://github.com/CoreBotics-Lab/pixi_ros2_Template.git my_robot_ws
+cd my_robot_ws
+rm -rf .git
+git init   # Optional: initialize fresh git history for your own project
+./setup_workspace
 ```
-This script automatically installs [Pixi](https://pixi.sh) if it is not already on your system, syncs the workspace name in `pixi.toml`, installs the ROS 2 environment, and configures the matching Python version across `pixi.toml`, `.vscode/settings.json`, and `pyrefly.toml`.
+
+> [!TIP]
+> **Creating a new GitHub repository?** You can also click **Use this template → Create a new repository** at the top of this repo on GitHub, then clone your new repository and run `./setup_workspace`.
+
+Running `./setup_workspace` without arguments displays the available ROS 2 distributions and lets you select one interactively (or pass it directly, e.g. `./setup_workspace jazzy`). This script automatically installs [Pixi](https://pixi.sh) if it is not already on your system, syncs the workspace name in `pixi.toml` to your folder name, installs the ROS 2 environment, and configures the matching Python version across `pixi.toml`, `.vscode/settings.json`, and `pyrefly.toml`.
 
 > [!NOTE]
 > If `setup_workspace` installed Pixi for the first time and `pixi` is not found in your current terminal afterwards, close and reopen your terminal or run `exec bash` to reload your `PATH`.
@@ -74,16 +80,17 @@ For subsequent sessions, open Ubuntu by either:
 - Opening **Windows Terminal** and selecting the Ubuntu profile.
 
 ### Step 3: Clone and Launch the Workspace
-Clone the repository into your Linux home directory (avoid cloning directly onto Windows drive paths like `C:\` or `/mnt/c/` for optimal file I/O performance), then run `setup_workspace`:
+Create your workspace in your Linux home directory (avoid cloning directly onto Windows drive paths like `C:\` or `/mnt/c/` for optimal file I/O performance) using either **Use this template** on GitHub or a shallow clone without `.git` history, then run `setup_workspace`:
 ```bash
 cd ~
-git clone https://github.com/CoreBotics-Lab/pixi_ros2_Template.git
-cd pixi_ros2_Template
-./setup_workspace jazzy
+git clone --depth 1 https://github.com/CoreBotics-Lab/pixi_ros2_Template.git my_robot_ws
+cd my_robot_ws
+rm -rf .git
+./setup_workspace
 exec bash   # Reload PATH if Pixi was installed for the first time
 pixi shell
 ```
-*(Replace `jazzy` with your desired ROS 2 distribution, such as `lyrical`, if needed.)*
+*(You can also pass a distribution directly, e.g. `./setup_workspace jazzy` or `./setup_workspace lyrical`.)*
 
 ### Step 4: VS Code Integration (Recommended)
 1. Install [VS Code](https://code.visualstudio.com/) on Windows.
@@ -203,7 +210,6 @@ pixi run build
 ├── dds_config/            # Workspace CycloneDDS XML configuration
 ├── src/                   # Place your ROS 2 packages here
 ├── pixi.toml              # Pixi environment & dependencies specification
-├── pixi.lock              # Reproducible dependency lockfile
 ├── pyrefly.toml           # Python type-checking configuration
-└── setup_workspace        # Helper script to switch ROS 2 distributions
+└── setup_workspace        # Helper script to setup and switch ROS 2 distributions
 ```
