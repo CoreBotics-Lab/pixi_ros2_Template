@@ -4,48 +4,152 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-get_recommended_distro() {
+DISTRO_LINES=""
+EOL_LINES=""
+RECOMMENDED_DISTRO=""
+
+load_distros() {
+    if [[ -n "$DISTRO_LINES" || -n "$EOL_LINES" ]]; then
+        return 0
+    fi
+
+    local fetched=""
+    if command -v curl >/dev/null 2>&1 && command -v python3 >/dev/null 2>&1; then
+        fetched="$(curl -fsSL --max-time 4 https://docs.ros.org/en/rolling/Releases.html 2>/dev/null | python3 -c '
+import sys, re, html
+from datetime import datetime
+
+def parse_date(s):
+    for fmt in ("%B %d, %Y", "%B %Y"):
+        try:
+            return datetime.strptime(s.strip(), fmt)
+        except ValueError:
+            pass
+    return None
+
+data = sys.stdin.read()
+rows = re.findall(r"<tr class=\"row-(?:even|odd)\"[^>]*>(.*?)</tr>", data, re.S)
+now = datetime.now()
+now_m = now.year * 12 + now.month
+active = []
+eol = []
+for r in rows:
+    cols = [html.unescape(re.sub(r"<[^>]+>", "", c)).strip() for c in re.findall(r"<td[^>]*>(.*?)</td>", r, re.S)]
+    if len(cols) >= 4 and cols[0] and cols[3]:
+        release = cols[0]
+        distro = release.split()[0].lower()
+        rel_dt = parse_date(cols[1])
+        eol_dt = parse_date(cols[3])
+        # Only include released distros from Foxy (2020) onward
+        if not rel_dt or not eol_dt or rel_dt > now or rel_dt.year < 2020:
+            continue
+        is_lts = (eol_dt.year - rel_dt.year) >= 4
+        eol_m = eol_dt.year * 12 + eol_dt.month
+        kind = "LTS" if is_lts else "Standard"
+        eol_fmt = eol_dt.strftime("%b %Y")
+        if eol_m >= now_m:
+            active.append((distro, release, kind, eol_fmt, eol_m, is_lts))
+        else:
+            eol.append((distro, release, kind, eol_fmt))
+
+if not active and not eol:
+    sys.exit(1)
+
+rec = None
+for distro, release, kind, eol_fmt, eol_m, is_lts in reversed(active):
+    if is_lts and (eol_m - now_m) >= 18:
+        rec = distro
+        break
+if not rec and active:
+    rec = active[0][0]
+
+print(f"REC={rec or \"\"}")
+for distro, release, kind, eol_fmt, eol_m, is_lts in active:
+    tag = " [Recommended]" if distro == rec else ""
+    print(f"ACT|  {distro:<9} {release:<20} {kind}, supported until {eol_fmt}{tag}")
+for distro, release, kind, eol_fmt in eol:
+    print(f"EOL|  {distro:<9} {release:<20} {kind}, ended {eol_fmt}")
+' 2>/dev/null || true)"
+    fi
+
+    if [[ -n "$fetched" ]]; then
+        RECOMMENDED_DISTRO="$(printf '%s\n' "$fetched" | sed -n 's/^REC=//p' | head -n 1)"
+        DISTRO_LINES="$(printf '%s\n' "$fetched" | sed -n 's/^ACT|//p')"
+        EOL_LINES="$(printf '%s\n' "$fetched" | sed -n 's/^EOL|//p')"
+        return 0
+    fi
+
+    # Offline fallback if docs.ros.org is unreachable
     local now_year now_month now_months min_months=18
     now_year=$((10#$(date +%Y)))
     now_month=$((10#$(date +%m)))
     now_months=$((now_year * 12 + now_month))
 
-    # LTS distributions in chronological order: name:eol_year:eol_month
-    local entry name eol_y eol_m eol_months
-    for entry in "humble:2027:5" "jazzy:2029:5" "lyrical:2031:5"; do
-        IFS=':' read -r name eol_y eol_m <<< "$entry"
+    # Format: distro|release|kind|eol_label|eol_year|eol_month|is_lts
+    local entries=(
+        "lyrical|Lyrical Luth|LTS|May 2031|2031|5|1"
+        "kilted|Kilted Kaiju|Standard|Dec 2026|2026|12|0"
+        "jazzy|Jazzy Jalisco|LTS|May 2029|2029|5|1"
+        "humble|Humble Hawksbill|LTS|May 2027|2027|5|1"
+        "iron|Iron Irwini|Standard|Dec 2024|2024|12|0"
+        "galactic|Galactic Geochelone|Standard|Dec 2022|2022|12|0"
+        "foxy|Foxy Fitzroy|LTS|Jun 2023|2023|6|1"
+    )
+
+    local entry name rel kind eol_label eol_y eol_m is_lts eol_months
+    RECOMMENDED_DISTRO=""
+    for ((i=${#entries[@]}-1; i>=0; i--)); do
+        IFS='|' read -r name rel kind eol_label eol_y eol_m is_lts <<< "${entries[$i]}"
         eol_months=$((eol_y * 12 + eol_m))
-        if (( eol_months - now_months >= min_months )); then
-            echo "$name"
-            return 0
+        if (( is_lts == 1 && eol_months - now_months >= min_months )); then
+            RECOMMENDED_DISTRO="$name"
+            break
         fi
     done
-    echo "lyrical"
+
+    DISTRO_LINES=""
+    EOL_LINES=""
+    for entry in "${entries[@]}"; do
+        IFS='|' read -r name rel kind eol_label eol_y eol_m is_lts <<< "$entry"
+        eol_months=$((eol_y * 12 + eol_m))
+        local line
+        if (( eol_months >= now_months )); then
+            local tag=""
+            if [[ "$name" == "$RECOMMENDED_DISTRO" ]]; then
+                tag=" [Recommended]"
+            fi
+            printf -v line "  %-9s %-20s %s, supported until %s%s" "$name" "$rel" "$kind" "$eol_label" "$tag"
+            DISTRO_LINES+="${line}"$'\n'
+        else
+            printf -v line "  %-9s %-20s %s, ended %s" "$name" "$rel" "$kind" "$eol_label"
+            EOL_LINES+="${line}"$'\n'
+        fi
+    done
+    DISTRO_LINES="${DISTRO_LINES%$'\n'}"
+    EOL_LINES="${EOL_LINES%$'\n'}"
 }
 
 usage() {
-    local rec
-    rec="$(get_recommended_distro)"
-
-    local l_tag="" k_tag="" j_tag="" h_tag=""
-    case "$rec" in
-        lyrical) l_tag=" [Recommended]" ;;
-        kilted)  k_tag=" [Recommended]" ;;
-        jazzy)   j_tag=" [Recommended]" ;;
-        humble)  h_tag=" [Recommended]" ;;
-    esac
+    load_distros
 
     cat <<EOF
 Usage: $(basename "$0") <ros_distro>
 
 Available ROS 2 distributions (RoboStack):
-  Distro    Release           Support / EOL
-  ------    -------           -------------
-  lyrical   Lyrical Luth      LTS, supported until May 2031${l_tag}
-  kilted    Kilted Kaiju      Standard, supported until Dec 2026${k_tag}
-  jazzy     Jazzy Jalisco     LTS, supported until May 2029${j_tag}
-  humble    Humble Hawksbill  LTS, supported until May 2027${h_tag}
+  Distro    Release              Support / EOL
+  ------    -------              -------------
+${DISTRO_LINES}
 EOF
+
+    if [[ -n "$EOL_LINES" ]]; then
+        cat <<EOF
+
+End-of-Life ROS 2 distributions (support has ended, can still be installed):
+  Distro    Release              Status
+  ------    -------              ------
+${EOL_LINES}
+EOF
+    fi
 }
 
 if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
@@ -53,14 +157,29 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
     exit 0
 fi
 
-if [[ $# -ne 1 || -z "${1:-}" ]]; then
-    echo "Warning: No ROS 2 distribution specified." >&2
+if [[ $# -gt 1 ]]; then
+    echo "Error: Expected at most 1 argument (<ros_distro>)." >&2
     echo "" >&2
     usage >&2
     exit 1
 fi
 
-TARGET_DISTRO="$1"
+if [[ $# -eq 0 || -z "${1:-}" ]]; then
+    usage
+    echo ""
+    rec="$RECOMMENDED_DISTRO"
+    if ! read -r -p "Select ROS 2 distro [default: ${rec}]: " TARGET_DISTRO; then
+        echo ""
+        echo "Error: No distribution selected." >&2
+        exit 1
+    fi
+    TARGET_DISTRO="${TARGET_DISTRO// /}"
+    if [[ -z "$TARGET_DISTRO" ]]; then
+        TARGET_DISTRO="$rec"
+    fi
+else
+    TARGET_DISTRO="$1"
+fi
 
 if [[ ! "$TARGET_DISTRO" =~ ^[a-z0-9_-]+$ ]]; then
     echo "Error: Invalid distro name '$TARGET_DISTRO'. Expected lowercase alphanumeric characters, '-' or '_'." >&2

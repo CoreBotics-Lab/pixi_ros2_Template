@@ -23,16 +23,16 @@ Provides Docker-like workspace isolation with **100% native hardware access** (N
 ## Ubuntu Setup (Native)
 
 ### 1. Clone & Setup Workspace
-Clone or download this template, then run `set_ros_version` with your target ROS 2 distribution (defaults to `jazzy`, or pass another distro such as `lyrical`):
+Clone or download this template, then run `setup_workspace` with your target ROS 2 distribution (defaults to `jazzy`, or pass another distro such as `lyrical`):
 ```bash
 git clone https://github.com/CoreBotics-Lab/pixi_ros2_Template.git
 cd pixi_ros2_Template
-./set_ros_version jazzy
+./setup_workspace jazzy
 ```
 This script automatically installs [Pixi](https://pixi.sh) if it is not already on your system, syncs the workspace name in `pixi.toml`, installs the ROS 2 environment, and configures the matching Python version across `pixi.toml`, `.vscode/settings.json`, and `pyrefly.toml`.
 
 > [!NOTE]
-> If `set_ros_version` installed Pixi for the first time and `pixi` is not found in your current terminal afterwards, close and reopen your terminal or run `exec bash` to reload your `PATH`.
+> If `setup_workspace` installed Pixi for the first time and `pixi` is not found in your current terminal afterwards, close and reopen your terminal or run `exec bash` to reload your `PATH`.
 
 ### 2. Enter Environment & Build
 ```bash
@@ -74,12 +74,12 @@ For subsequent sessions, open Ubuntu by either:
 - Opening **Windows Terminal** and selecting the Ubuntu profile.
 
 ### Step 3: Clone and Launch the Workspace
-Clone the repository into your Linux home directory (avoid cloning directly onto Windows drive paths like `C:\` or `/mnt/c/` for optimal file I/O performance), then run `set_ros_version`:
+Clone the repository into your Linux home directory (avoid cloning directly onto Windows drive paths like `C:\` or `/mnt/c/` for optimal file I/O performance), then run `setup_workspace`:
 ```bash
 cd ~
 git clone https://github.com/CoreBotics-Lab/pixi_ros2_Template.git
 cd pixi_ros2_Template
-./set_ros_version jazzy
+./setup_workspace jazzy
 exec bash   # Reload PATH if Pixi was installed for the first time
 pixi shell
 ```
@@ -138,11 +138,11 @@ pixi run ros2 run demo_nodes_py listener
 This template defaults to **ROS 2 Jazzy** (the latest LTS), but switching between distributions (such as transitioning from `jazzy` to `lyrical`) can be performed either automatically via a single command or manually.
 
 ### One-Command Quick Switch
-Make sure you are in the workspace root directory, then run the `set_ros_version` script with your target distribution (e.g. `lyrical`):
+Make sure you are in the workspace root directory, then run `./setup_workspace` (interactive selection) or pass your target distribution directly (e.g. `./setup_workspace lyrical`):
 
 ```bash
 cd pixi_ros2_Template  # Ensure you are inside the workspace folder
-./set_ros_version lyrical
+./setup_workspace lyrical
 ```
 
 The script checks the currently configured distro in `pixi.toml`:
@@ -150,10 +150,10 @@ The script checks the currently configured distro in `pixi.toml`:
 - Otherwise, it ensures Pixi is installed, updates `pixi.toml` and `.vscode/settings.json`, deletes `pixi.lock` along with `build/`, `install/`, `log/`, and `.pixi/`, runs `pixi install`, and updates `pixi.toml`, `.vscode/settings.json`, and `pyrefly.toml` to match the resolved Python version.
 
 > [!WARNING]
-> Run `./set_ros_version <distro>` from the workspace root (`pixi_ros2_Template`), or invoke it by path from any directory (`<path-to-workspace>/set_ros_version <distro>`).
+> Run `./setup_workspace <distro>` from the workspace root (`pixi_ros2_Template`), or invoke it by path from any directory (`<path-to-workspace>/setup_workspace <distro>`).
 
 > [!NOTE]
-> If `set_ros_version` installed Pixi for the first time and `pixi` is not found in your current terminal afterwards, close and reopen your terminal or run `exec bash` to reload your `PATH`.
+> If `setup_workspace` installed Pixi for the first time and `pixi` is not found in your current terminal afterwards, close and reopen your terminal or run `exec bash` to reload your `PATH`.
 
 ### Manual Switch Instructions
 
@@ -205,5 +205,5 @@ pixi run build
 ├── pixi.toml              # Pixi environment & dependencies specification
 ├── pixi.lock              # Reproducible dependency lockfile
 ├── pyrefly.toml           # Python type-checking configuration
-└── set_ros_version        # Helper script to switch ROS 2 distributions
+└── setup_workspace        # Helper script to switch ROS 2 distributions
 ```
