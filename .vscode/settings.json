@@ -50,6 +50,7 @@
     "files.exclude": {
         "**/.pixi": true,
         "**/bash_scripts": true,
+        "**/set_ros_version": true,
         "**/pixi.lock": true,
         "**/.gitattributes": true,
         "**/build": true,
@@ -60,6 +61,7 @@
     "search.exclude": {
         "**/.pixi": true,
         "**/bash_scripts": true,
+        "**/set_ros_version": true,
         "**/pixi.lock": true,
         "**/build": true,
         "**/install": true,

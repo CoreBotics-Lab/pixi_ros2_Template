@@ -106,6 +106,20 @@ sync_python_version() {
     pixi install
 }
 
+sync_workspace_name() {
+    local ws_name
+    ws_name="$(basename "$SCRIPT_DIR")"
+    ws_name="${ws_name// /_}"
+    local current_name
+    current_name="$(sed -n 's/^name = "\([^"]*\)"/\1/p' pixi.toml | head -n 1)"
+    if [[ -n "$ws_name" && "$current_name" != "$ws_name" ]]; then
+        echo "Updating workspace name in pixi.toml from '$current_name' to '$ws_name'..."
+        sed -i -E "s|^name = \"[^\"]+\"|name = \"${ws_name}\"|" pixi.toml
+    fi
+}
+
+sync_workspace_name
+
 if [[ "$CURRENT_DISTRO" == "$TARGET_DISTRO" ]]; then
     if [[ -d ".pixi" ]]; then
         echo "ROS 2 distro is already '$TARGET_DISTRO' and installed. Skipping."
