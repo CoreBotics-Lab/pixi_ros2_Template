@@ -9,6 +9,7 @@ Provides Docker-like workspace isolation with **100% native hardware access** (N
 ## Features
 
 - **Isolated & Reproducible**: Powered by RoboStack and Pixi. No `sudo apt` or `rosdep` pollution on the host.
+- **Automated Setup & Distro Switching**: `./setup_workspace` installs Pixi if missing, queries `docs.ros.org` and RoboStack for available distributions, resolves the recommended Python version, and configures editor tooling automatically.
 - **Dynamic Fast Builds**: Custom build scripts supporting single packages, wildcards (`build my_pkg*`), and clean builds (`clean all`).
 - **Tab Autocompletion**: Package name completion works automatically inside `pixi shell` (`build <TAB>`).
 - **VS Code Pre-configured**:
@@ -25,8 +26,9 @@ Provides Docker-like workspace isolation with **100% native hardware access** (N
 ### 1. Clone & Setup Workspace
 Clone this template without its `.git` history and run `setup_workspace`:
 ```bash
-git clone --depth 1 https://github.com/CoreBotics-Lab/pixi_ros2_Template.git my_robot_ws
+mkdir my_robot_ws
 cd my_robot_ws
+git clone --depth 1 https://github.com/CoreBotics-Lab/pixi_ros2_Template.git .
 rm -rf .git
 git init   # Optional: initialize fresh git history for your own project
 ./setup_workspace
@@ -82,9 +84,9 @@ For subsequent sessions, open Ubuntu by either:
 ### Step 3: Clone and Launch the Workspace
 Create your workspace in your Linux home directory (avoid cloning directly onto Windows drive paths like `C:\` or `/mnt/c/` for optimal file I/O performance) using either **Use this template** on GitHub or a shallow clone without `.git` history, then run `setup_workspace`:
 ```bash
-cd ~
-git clone --depth 1 https://github.com/CoreBotics-Lab/pixi_ros2_Template.git my_robot_ws
-cd my_robot_ws
+mkdir ~/my_robot_ws
+cd ~/my_robot_ws
+git clone --depth 1 https://github.com/CoreBotics-Lab/pixi_ros2_Template.git .
 rm -rf .git
 ./setup_workspace
 exec bash   # Reload PATH if Pixi was installed for the first time
@@ -95,12 +97,13 @@ pixi shell
 ### Step 4: VS Code Integration (Recommended)
 1. Install [VS Code](https://code.visualstudio.com/) on Windows.
 2. Install the **WSL** extension (`ms-vscode-remote.remote-wsl`) from the VS Code Marketplace.
-3. Inside your Ubuntu terminal, navigate to the template directory and launch VS Code:
+3. Inside your Ubuntu terminal, navigate to your workspace directory and launch VS Code:
    ```bash
-   cd ~/pixi_ros2_Template
+   cd ~/my_robot_ws
    code .
    ```
-   > **Tip:** If running `code .` outputs `command not found: code`, open VS Code on Windows, press `Ctrl+Shift+P` (or `F1`), select **WSL: Connect to WSL**, and open the folder `~/pixi_ros2_Template`. This initializes the VS Code WSL server agent and registers the terminal shortcut permanently.
+   > [!TIP]
+   > If running `code .` outputs `command not found: code`, open VS Code on Windows, press `Ctrl+Shift+P` (or `F1`), select **WSL: Connect to WSL**, and open the folder `~/my_robot_ws`. This initializes the VS Code WSL server agent and registers the terminal shortcut permanently.
 
    VS Code will connect directly into your WSL2 Linux workspace with all template settings, Clangd, and Pyrefly tooling pre-configured. Graphical applications (RViz2, Gazebo) launched from the terminal will open seamlessly on your Windows desktop via WSLg.
 
@@ -112,14 +115,14 @@ To verify that the ROS 2 daemon, middleware, and pub/sub communication are opera
 
 **Terminal 1 (Publisher):**
 ```bash
-cd pixi_ros2_Template
+cd ~/my_robot_ws
 pixi shell
 ros2 run demo_nodes_py talker
 ```
 
 **Terminal 2 (Subscriber):**
 ```bash
-cd pixi_ros2_Template
+cd ~/my_robot_ws
 pixi shell
 ros2 run demo_nodes_py listener
 ```
@@ -128,13 +131,13 @@ Alternatively, you can execute them directly without entering the shell using `p
 
 **Terminal 1 (Publisher):**
 ```bash
-cd pixi_ros2_Template
+cd ~/my_robot_ws
 pixi run ros2 run demo_nodes_py talker
 ```
 
 **Terminal 2 (Subscriber):**
 ```bash
-cd pixi_ros2_Template
+cd ~/my_robot_ws
 pixi run ros2 run demo_nodes_py listener
 ```
 
@@ -142,22 +145,22 @@ pixi run ros2 run demo_nodes_py listener
 
 ## Switching Between ROS 2 Distros
 
-This template defaults to **ROS 2 Jazzy** (the latest LTS), but switching between distributions (such as transitioning from `jazzy` to `lyrical`) can be performed either automatically via a single command or manually.
+This template defaults to **ROS 2 Jazzy** (LTS), but switching between distributions (such as transitioning from `jazzy` to `lyrical`) can be performed either automatically via `./setup_workspace` or manually.
 
 ### One-Command Quick Switch
-Make sure you are in the workspace root directory, then run `./setup_workspace` (interactive selection) or pass your target distribution directly (e.g. `./setup_workspace lyrical`):
+From the workspace root directory (or by invoking the script by path), run `./setup_workspace` for interactive selection or pass your target distribution directly:
 
 ```bash
-cd pixi_ros2_Template  # Ensure you are inside the workspace folder
+cd ~/my_robot_ws
 ./setup_workspace lyrical
 ```
 
-The script checks the currently configured distro in `pixi.toml`:
-- If it already matches the target distro and `.pixi/` is present, it skips reinstallation.
-- Otherwise, it ensures Pixi is installed, updates `pixi.toml` and `.vscode/settings.json`, deletes `pixi.lock` along with `build/`, `install/`, `log/`, and `.pixi/`, runs `pixi install`, and updates `pixi.toml`, `.vscode/settings.json`, and `pyrefly.toml` to match the resolved Python version.
-
-> [!WARNING]
-> Run `./setup_workspace <distro>` from the workspace root (`pixi_ros2_Template`), or invoke it by path from any directory (`<path-to-workspace>/setup_workspace <distro>`).
+What `setup_workspace` does:
+- Fetches active and end-of-life ROS 2 distributions from `docs.ros.org` (filtered by RoboStack availability) and marks the most mature LTS with at least 18 months of support remaining as `[Recommended]`.
+- Validates that `https://prefix.dev/robostack-<distro>` exists before modifying any files.
+- Syncs the workspace `name` in `pixi.toml` to the folder name.
+- If the target distro is already installed in `.pixi/` and its Python version matches, skips reinstallation.
+- Otherwise, updates `pixi.toml` and `.vscode/settings.json`, cleans `pixi.lock`, `build/`, `install/`, `log/`, and `.pixi/`, resolves the recommended Python version from `docs.ros.org` and Ubuntu's Launchpad archive (falling back to `*` if RoboStack lacks that Python ABI), runs `pixi install`, and syncs the installed Python version across `pixi.toml`, `.vscode/settings.json`, and `pyrefly.toml`.
 
 > [!NOTE]
 > If `setup_workspace` installed Pixi for the first time and `pixi` is not found in your current terminal afterwards, close and reopen your terminal or run `exec bash` to reload your `PATH`.
