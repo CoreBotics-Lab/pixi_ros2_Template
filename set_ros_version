@@ -1,0 +1,146 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
+
+usage() {
+    cat <<EOF
+Usage: $(basename "$0") <ros_distro>
+
+Switch the workspace ROS 2 distribution (e.g., jazzy, lyrical, kilted).
+Checks the currently configured distro in pixi.toml:
+  - If it already matches <ros_distro> and .pixi/ exists, skips installation.
+  - Otherwise, ensures Pixi is installed, updates pixi.toml, removes
+    pixi.lock and build/install/log/.pixi directories, runs 'pixi install',
+    and configures the resolved Python version in pixi.toml,
+    .vscode/settings.json, and pyrefly.toml.
+EOF
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+    usage
+    exit 0
+fi
+
+if [[ $# -ne 1 || -z "${1:-}" ]]; then
+    usage
+    exit 1
+fi
+
+TARGET_DISTRO="$1"
+
+if [[ ! "$TARGET_DISTRO" =~ ^[a-z0-9_-]+$ ]]; then
+    echo "Error: Invalid distro name '$TARGET_DISTRO'. Expected lowercase alphanumeric characters, '-' or '_'." >&2
+    exit 1
+fi
+
+if [[ ! -f "pixi.toml" ]]; then
+    echo "Error: pixi.toml not found in $SCRIPT_DIR" >&2
+    exit 1
+fi
+
+CURRENT_DISTRO="$(sed -n 's/.*robostack-\([a-z0-9_-]*\).*/\1/p' pixi.toml | head -n 1)"
+
+if [[ -z "$CURRENT_DISTRO" ]]; then
+    echo "Error: Could not detect current ROS 2 distro from pixi.toml." >&2
+    exit 1
+fi
+
+ensure_pixi() {
+    if command -v pixi >/dev/null 2>&1; then
+        return 0
+    fi
+
+    if [[ -x "$HOME/.pixi/bin/pixi" ]]; then
+        export PATH="$HOME/.pixi/bin:$PATH"
+        return 0
+    fi
+
+    echo "Pixi is not installed. Installing Pixi..."
+    if ! command -v curl >/dev/null 2>&1; then
+        echo "Error: 'curl' is required to install Pixi. Please install curl and try again." >&2
+        exit 1
+    fi
+
+    curl -fsSL https://pixi.sh/install.sh | bash
+    export PATH="$HOME/.pixi/bin:$PATH"
+
+    if ! command -v pixi >/dev/null 2>&1; then
+        echo "Error: Pixi installation finished, but 'pixi' was not found in PATH." >&2
+        exit 1
+    fi
+}
+
+sync_python_version() {
+    local python_bin=".pixi/envs/default/bin/python"
+    if [[ ! -x "$python_bin" ]]; then
+        echo "Warning: '$python_bin' not found; skipping Python version sync." >&2
+        return 0
+    fi
+
+    local python_ver
+    python_ver="$("$python_bin" -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}")')"
+
+    if [[ -z "$python_ver" ]]; then
+        echo "Warning: Could not determine installed Python version." >&2
+        return 0
+    fi
+
+    echo "Detected Python $python_ver. Updating configuration files..."
+
+    sed -i -E "s/^python = \"[^\"]+\"/python = \"${python_ver}.*\"/" pixi.toml
+
+    if [[ -f ".vscode/settings.json" ]]; then
+        sed -i -E "s|lib/python[0-9]+\.[^/]+/site-packages|lib/python${python_ver}/site-packages|g" .vscode/settings.json
+    fi
+
+    if [[ -f "pyrefly.toml" ]]; then
+        sed -i -E \
+            -e "s/^python-version = \"[^\"]+\"/python-version = \"${python_ver}\"/" \
+            -e "s|lib/python[0-9]+\.[^/]+/site-packages|lib/python${python_ver}/site-packages|g" \
+            pyrefly.toml
+    fi
+
+    # Refresh lockfile after pinning the resolved Python version
+    pixi install
+}
+
+if [[ "$CURRENT_DISTRO" == "$TARGET_DISTRO" ]]; then
+    if [[ -d ".pixi" ]]; then
+        echo "ROS 2 distro is already '$TARGET_DISTRO' and installed. Skipping."
+        exit 0
+    else
+        ensure_pixi
+        echo "ROS 2 distro is already '$TARGET_DISTRO', but '.pixi/' is missing. Running 'pixi install'..."
+        pixi install
+        sync_python_version
+        exit 0
+    fi
+fi
+
+ensure_pixi
+
+echo "Switching ROS 2 distro from '$CURRENT_DISTRO' to '$TARGET_DISTRO'..."
+
+sed -i \
+    -e "s/robostack-${CURRENT_DISTRO}/robostack-${TARGET_DISTRO}/g" \
+    -e "s/ros-${CURRENT_DISTRO}-/ros-${TARGET_DISTRO}-/g" \
+    pixi.toml
+
+# Unpin Python so Pixi resolves the version required by the target ROS 2 distro
+sed -i -E "s/^python = \"[^\"]+\"/python = \"*\"/" pixi.toml
+
+if [[ -f ".vscode/settings.json" ]]; then
+    sed -i \
+        "s/\"ros\.distro\": \"${CURRENT_DISTRO}\"/\"ros.distro\": \"${TARGET_DISTRO}\"/g" \
+        .vscode/settings.json
+fi
+
+rm -f pixi.lock
+rm -rf build/ install/ log/ .pixi/
+
+pixi install
+sync_python_version
+
+echo "Successfully switched ROS 2 distro to '$TARGET_DISTRO'."

@@ -147,22 +147,19 @@ pixi run ros2 run demo_nodes_py listener
 This template defaults to **ROS 2 Jazzy** (the latest LTS), but switching between distributions (such as transitioning from `jazzy` to `lyrical`) can be performed either automatically via a single command or manually.
 
 ### One-Command Quick Switch
-Make sure you are in the workspace root directory, then run the following command (replace `old_distro` and `new_distro` as needed, e.g. `jazzy` to `lyrical`):
+Make sure you are in the workspace root directory, then run the `set_ros_version` script with your target distribution (e.g. `lyrical`):
 
 ```bash
 cd pixi_ros2_Template  # Ensure you are inside the workspace folder
-sed -i 's/<old_distro>/<new_distro>/g' pixi.toml .vscode/settings.json README.md && rm -f pixi.lock && rm -rf build/ install/ log/ .pixi/ && pixi install
+./set_ros_version lyrical
 ```
 
-For switching specifically from `jazzy` to `lyrical`:
-
-```bash
-cd pixi_ros2_Template  # Ensure you are inside the workspace folder
-sed -i 's/jazzy/lyrical/g' pixi.toml .vscode/settings.json README.md && rm -f pixi.lock && rm -rf build/ install/ log/ .pixi/ && pixi install
-```
+The script checks the currently configured distro in `pixi.toml`:
+- If it already matches the target distro and `.pixi/` is present, it skips reinstallation.
+- Otherwise, it ensures Pixi is installed, updates `pixi.toml` and `.vscode/settings.json`, deletes `pixi.lock` along with `build/`, `install/`, `log/`, and `.pixi/`, runs `pixi install`, and updates `pixi.toml`, `.vscode/settings.json`, and `pyrefly.toml` to match the resolved Python version.
 
 > [!WARNING]
-> You must run this command from the root directory of the workspace (`pixi_ros2_Template`). If executed from any other folder, `sed` will not find `pixi.toml` and will fail with a `No such file or directory` error.
+> You must run this script from the root directory of the workspace (`pixi_ros2_Template`), or invoke it directly via its path (`./set_ros_version <distro>`).
 
 > [!IMPORTANT]
 > The lockfile (`pixi.lock`) and previous build directories (`build/`, `install/`) must be removed during a distro switch. Removing `pixi.lock` allows Pixi to resolve the target distribution's package dependency graph cleanly without package conflicts.
@@ -215,5 +212,6 @@ pixi run build
 ├── src/                   # Place your ROS 2 packages here
 ├── pixi.toml              # Pixi environment & dependencies specification
 ├── pixi.lock              # Reproducible dependency lockfile
-└── pyrefly.toml           # Python type-checking configuration
+├── pyrefly.toml           # Python type-checking configuration
+└── set_ros_version        # Helper script to switch ROS 2 distributions
 ```
