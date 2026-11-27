@@ -159,10 +159,13 @@ The script checks the currently configured distro in `pixi.toml`:
 - Otherwise, it ensures Pixi is installed, updates `pixi.toml` and `.vscode/settings.json`, deletes `pixi.lock` along with `build/`, `install/`, `log/`, and `.pixi/`, runs `pixi install`, and updates `pixi.toml`, `.vscode/settings.json`, and `pyrefly.toml` to match the resolved Python version.
 
 > [!WARNING]
-> You must run this script from the root directory of the workspace (`pixi_ros2_Template`), or invoke it directly via its path (`./set_ros_version <distro>`).
+> Run `./set_ros_version <distro>` from the workspace root (`pixi_ros2_Template`), or invoke it by path from any directory (`<path-to-workspace>/set_ros_version <distro>`).
 
 > [!IMPORTANT]
 > The lockfile (`pixi.lock`) and previous build directories (`build/`, `install/`) must be removed during a distro switch. Removing `pixi.lock` allows Pixi to resolve the target distribution's package dependency graph cleanly without package conflicts.
+
+> [!NOTE]
+> If `set_ros_version` installed Pixi for the first time and `pixi` is not found in your current terminal afterwards, close and reopen your terminal or run `exec bash` to reload your `PATH`.
 
 ### Manual Switch Instructions
 
@@ -189,8 +192,9 @@ If you prefer updating configurations manually:
   ros-lyrical-rmw-cyclonedds-cpp = "*"
   ```
 
-#### 2. Update Editor Configurations
+#### 2. Update Editor & Type-Checker Configurations
 - In `.vscode/settings.json`, update `"ros.distro": "lyrical"`.
+- If the target distribution uses a different Python version, update `python` in `pixi.toml`, the `site-packages` paths in `.vscode/settings.json`, and `python-version` / `search-path` in `pyrefly.toml`.
 
 #### 3. Clean and Reinstall Environment
 ```bash
